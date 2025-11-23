@@ -34,6 +34,7 @@ Welcome to the comprehensive knowledge base for the Liquid Glass 3D website proj
 | [Shader Specification](./SHADER_SPECIFICATION.md) | Liquid Glass material system |
 | [Animation System](./ANIMATION_SYSTEM.md) | Motion design, timings, springs |
 | [Asset Pipeline](./ASSET_PIPELINE.md) | Blender → Web workflow |
+| [MCP Server](./MCP_SERVER.md) | Claude Desktop integration for 3D editing |
 
 ### Quality & Standards
 
@@ -114,6 +115,7 @@ Instead of traditional 2D web pages:
 | Shaders | Custom GLSL |
 | Build | Vite |
 | Modeling | Blender |
+| AI Integration | MCP Server (Claude Desktop) |
 
 ---
 
