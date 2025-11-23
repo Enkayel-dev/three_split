@@ -1,2 +1,6 @@
 export { default as Scene } from './Scene'
 export { default as HomeHub } from './HomeHub'
+export { default as ConsultingRoom } from './ConsultingRoom'
+export { default as SoftwareRoom } from './SoftwareRoom'
+export { default as ConstructionRoom } from './ConstructionRoom'
+export { default as ContactNode } from './ContactNode'
