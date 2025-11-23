@@ -113,8 +113,6 @@ export default function GlassCard({
           anchorX="center"
           anchorY="middle"
           maxWidth={width - 0.1}
-          font="/fonts/inter-medium.woff"
-          characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
         >
           {title}
         </Text>
@@ -128,7 +126,6 @@ export default function GlassCard({
             anchorX="center"
             anchorY="middle"
             maxWidth={width - 0.1}
-            font="/fonts/inter-regular.woff"
           >
             {subtitle}
           </Text>

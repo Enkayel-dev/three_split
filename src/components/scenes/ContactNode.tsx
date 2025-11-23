@@ -52,7 +52,7 @@ export default function ContactNode({
           color="#ffffff"
           anchorX="center"
           anchorY="middle"
-          font="/fonts/Inter-SemiBold.woff"
+          
         >
           Get in Touch
         </Text>

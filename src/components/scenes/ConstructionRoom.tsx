@@ -68,7 +68,7 @@ export default function ConstructionRoom({
           color="#ffffff"
           anchorX="center"
           anchorY="middle"
-          font="/fonts/Inter-SemiBold.woff"
+          
         >
           Construction & Architecture
         </Text>

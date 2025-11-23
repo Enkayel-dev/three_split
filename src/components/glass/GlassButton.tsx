@@ -210,8 +210,6 @@ export default function GlassButton({
         color={disabled ? '#666666' : textColor}
         anchorX="center"
         anchorY="middle"
-        font="/fonts/Inter-Medium.woff"
-        outlineWidth={0}
       >
         {loading ? '...' : label}
       </Text>

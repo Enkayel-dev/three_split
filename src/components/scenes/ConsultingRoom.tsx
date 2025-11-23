@@ -56,7 +56,7 @@ export default function ConsultingRoom({
           color="#ffffff"
           anchorX="center"
           anchorY="middle"
-          font="/fonts/Inter-SemiBold.woff"
+          
         >
           Business Operations Consulting
         </Text>

@@ -146,7 +146,6 @@ export default function GlassModal({
               color="#ffffff"
               anchorX="center"
               anchorY="middle"
-              font="/fonts/Inter-SemiBold.woff"
             >
               {title}
             </Text>

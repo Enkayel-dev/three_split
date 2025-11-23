@@ -65,7 +65,7 @@ export default function SoftwareRoom({
           color="#ffffff"
           anchorX="center"
           anchorY="middle"
-          font="/fonts/Inter-SemiBold.woff"
+          
         >
           Custom Software Development
         </Text>
