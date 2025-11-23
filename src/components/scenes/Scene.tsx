@@ -1,9 +1,13 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Environment, ContactShadows } from '@react-three/drei'
+import { Environment, ContactShadows, Stars, Grid } from '@react-three/drei'
 import * as THREE from 'three'
 import { useNavigationStore } from '@/store'
 import HomeHub from './HomeHub'
+import ConsultingRoom from './ConsultingRoom'
+import SoftwareRoom from './SoftwareRoom'
+import ConstructionRoom from './ConstructionRoom'
+import ContactNode from './ContactNode'
 import CameraController from '@/systems/camera/CameraController'
 
 interface SceneProps {
@@ -25,20 +29,45 @@ export default function Scene({ reducedMotion, reducedTransparency }: SceneProps
   return (
     <>
       {/* Environment & Lighting */}
-      <Environment preset="studio" background={false} />
-      <ambientLight intensity={0.3} />
+      <Environment preset="city" background={false} />
+      <ambientLight intensity={0.5} />
       <directionalLight
         position={[5, 5, 5]}
-        intensity={0.5}
+        intensity={1}
         castShadow
         shadow-mapSize={1024}
       />
-
-      {/* Fog for depth */}
-      <fog attach="fog" args={['#0a0a0f', 5, 20]} />
+      <pointLight position={[-5, 5, -5]} intensity={0.5} color="#4A90D9" />
 
       {/* Background color */}
-      <color attach="background" args={['#0a0a0f']} />
+      <color attach="background" args={['#0a0a12']} />
+
+      {/* Subtle stars in background */}
+      <Stars
+        radius={50}
+        depth={50}
+        count={1000}
+        factor={4}
+        saturation={0}
+        fade
+        speed={0.5}
+      />
+
+      {/* Grid floor for spatial reference */}
+      <Grid
+        position={[0, -0.5, 0]}
+        args={[20, 20]}
+        cellSize={0.5}
+        cellThickness={0.5}
+        cellColor="#1a1a2e"
+        sectionSize={2}
+        sectionThickness={1}
+        sectionColor="#2a2a4e"
+        fadeDistance={15}
+        fadeStrength={1}
+        followCamera={false}
+        infiniteGrid
+      />
 
       {/* Camera Controller */}
       <CameraController reducedMotion={reducedMotion} />
@@ -47,9 +76,9 @@ export default function Scene({ reducedMotion, reducedTransparency }: SceneProps
       <group ref={groupRef}>
         {/* Contact shadows for grounding */}
         <ContactShadows
-          position={[0, -0.5, 0]}
-          opacity={0.4}
-          scale={10}
+          position={[0, -0.49, 0]}
+          opacity={0.5}
+          scale={15}
           blur={2}
           far={4}
         />
@@ -62,29 +91,36 @@ export default function Scene({ reducedMotion, reducedTransparency }: SceneProps
           />
         )}
 
-        {/* Placeholder for other scenes - will be implemented */}
+        {/* Consulting Room */}
         {currentNode === 'consulting' && (
-          <group position={[0, 1, 0]}>
-            {/* ConsultingRoom placeholder */}
-          </group>
+          <ConsultingRoom
+            reducedMotion={reducedMotion}
+            reducedTransparency={reducedTransparency}
+          />
         )}
 
+        {/* Software Room */}
         {currentNode === 'software' && (
-          <group position={[0, 1, 0]}>
-            {/* SoftwareRoom placeholder */}
-          </group>
+          <SoftwareRoom
+            reducedMotion={reducedMotion}
+            reducedTransparency={reducedTransparency}
+          />
         )}
 
+        {/* Construction Room */}
         {currentNode === 'construction' && (
-          <group position={[0, 1, 0]}>
-            {/* ConstructionRoom placeholder */}
-          </group>
+          <ConstructionRoom
+            reducedMotion={reducedMotion}
+            reducedTransparency={reducedTransparency}
+          />
         )}
 
+        {/* Contact Node */}
         {currentNode === 'contact' && (
-          <group position={[0, 1, 0]}>
-            {/* ContactNode placeholder */}
-          </group>
+          <ContactNode
+            reducedMotion={reducedMotion}
+            reducedTransparency={reducedTransparency}
+          />
         )}
       </group>
     </>
