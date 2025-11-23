@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
+import { useShallow } from 'zustand/react/shallow'
 
 // Node IDs for navigation
 export type NodeId = 'home' | 'consulting' | 'software' | 'construction' | 'contact'
@@ -80,31 +81,37 @@ export const useAppStore = create<AppState>()(
   }))
 )
 
-// Convenience hooks for specific slices
+// Convenience hooks for specific slices - using useShallow to prevent infinite loops
 export const useAccessibilityStore = () =>
-  useAppStore((state) => ({
-    reducedMotion: state.reducedMotion,
-    reducedTransparency: state.reducedTransparency,
-    highContrast: state.highContrast,
-    setReducedMotion: state.setReducedMotion,
-    setReducedTransparency: state.setReducedTransparency,
-    setHighContrast: state.setHighContrast,
-  }))
+  useAppStore(
+    useShallow((state) => ({
+      reducedMotion: state.reducedMotion,
+      reducedTransparency: state.reducedTransparency,
+      highContrast: state.highContrast,
+      setReducedMotion: state.setReducedMotion,
+      setReducedTransparency: state.setReducedTransparency,
+      setHighContrast: state.setHighContrast,
+    }))
+  )
 
 export const useNavigationStore = () =>
-  useAppStore((state) => ({
-    currentNode: state.currentNode,
-    previousNode: state.previousNode,
-    isTransitioning: state.isTransitioning,
-    navigateTo: state.navigateTo,
-    setTransitioning: state.setTransitioning,
-  }))
+  useAppStore(
+    useShallow((state) => ({
+      currentNode: state.currentNode,
+      previousNode: state.previousNode,
+      isTransitioning: state.isTransitioning,
+      navigateTo: state.navigateTo,
+      setTransitioning: state.setTransitioning,
+    }))
+  )
 
 export const useUIStore = () =>
-  useAppStore((state) => ({
-    hoveredElement: state.hoveredElement,
-    activeModal: state.activeModal,
-    setHoveredElement: state.setHoveredElement,
-    openModal: state.openModal,
-    closeModal: state.closeModal,
-  }))
+  useAppStore(
+    useShallow((state) => ({
+      hoveredElement: state.hoveredElement,
+      activeModal: state.activeModal,
+      setHoveredElement: state.setHoveredElement,
+      openModal: state.openModal,
+      closeModal: state.closeModal,
+    }))
+  )

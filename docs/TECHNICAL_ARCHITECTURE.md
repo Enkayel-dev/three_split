@@ -162,6 +162,30 @@ interface AppState {
 }
 ```
 
+**IMPORTANT: Using `useShallow` for Selectors**
+
+When creating convenience hooks that return objects from Zustand, you MUST use `useShallow` to prevent infinite re-render loops:
+
+```typescript
+import { useShallow } from 'zustand/react/shallow'
+
+// CORRECT - uses useShallow to prevent infinite loops
+export const useNavigationStore = () =>
+  useAppStore(
+    useShallow((state) => ({
+      currentNode: state.currentNode,
+      navigateTo: state.navigateTo,
+    }))
+  )
+
+// WRONG - creates new object every render, causes infinite loop
+export const useNavigationStore = () =>
+  useAppStore((state) => ({
+    currentNode: state.currentNode,
+    navigateTo: state.navigateTo,
+  }))
+```
+
 ---
 
 ### 4. Scene Manager
