@@ -156,12 +156,26 @@ export function useSceneBridge() {
 
       case 'set_material': {
         const { objectId, ...materialProps } = message.payload as { objectId: string; preset?: string; transmission?: number; roughness?: number; color?: string }
-        state.updateSceneObject(objectId, { material: materialProps })
-        sendResponse({
-          type: 'material_updated',
-          payload: { success: true, message: 'Material updated' },
-          requestId: message.requestId,
-        })
+
+        // Check if it's a registered object first
+        const registeredObj = SceneRegistry.get(objectId)
+        if (registeredObj) {
+          // Update registered object via SceneRegistry
+          SceneRegistry.updateMaterialState(objectId, materialProps)
+          sendResponse({
+            type: 'material_updated',
+            payload: { success: true, message: 'Material updated (registered object)' },
+            requestId: message.requestId,
+          })
+        } else {
+          // Fall back to dynamic objects
+          state.updateSceneObject(objectId, { material: materialProps })
+          sendResponse({
+            type: 'material_updated',
+            payload: { success: true, message: 'Material updated' },
+            requestId: message.requestId,
+          })
+        }
         break
       }
 

@@ -97,7 +97,16 @@ export default function GlassCard({
       if (params.transmission !== undefined) mat.transmission = params.transmission
       if (params.roughness !== undefined) mat.roughness = params.roughness
       if (params.ior !== undefined) mat.ior = params.ior
-      if (params.color !== undefined) mat.color.set(params.color)
+      if (params.emissiveIntensity !== undefined) mat.emissiveIntensity = params.emissiveIntensity
+      if (params.envMapIntensity !== undefined) mat.envMapIntensity = params.envMapIntensity
+      if (params.clearcoat !== undefined) mat.clearcoat = params.clearcoat
+      if (params.color !== undefined) {
+        mat.color.set(params.color)
+        // Also tint attenuationColor for glass effect
+        if (mat.attenuationColor) mat.attenuationColor.set(params.color)
+        // Set emissive for glow effect
+        if (mat.emissive) mat.emissive.set(params.color)
+      }
 
       mat.needsUpdate = true
     })
