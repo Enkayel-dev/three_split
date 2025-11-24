@@ -1,5 +1,7 @@
 # Dynamic Scene Builder Implementation Plan
 
+> **📦 Extended Toolkit Available**: This document covers the foundational architecture (Phases 1-6). For high-level scene builder tools including spatial reasoning, layout templates, material presets, undo/redo, and visual feedback, see **[Scene Builder Toolkit Enhancements](./SCENE_BUILDER_TOOLKIT_ENHANCEMENTS.md)** (Phases 7-11, +34 MCP tools).
+
 ## Overview
 
 Transform the three_split Liquid Glass website from a static, hardcoded scene to a fully dynamic, persistent scene builder system where Claude Desktop can:
@@ -7,6 +9,7 @@ Transform the three_split Liquid Glass website from a static, hardcoded scene to
 - Save scene changes that persist across sessions
 - Build entire experiences from scratch
 - Configure dynamic backgrounds (hemisphere/sphere backgrounds with camera at center)
+- **[EXTENDED]** Use high-level abstractions for spatial reasoning, layouts, materials, and validation
 
 ## Current Architecture Issues
 
