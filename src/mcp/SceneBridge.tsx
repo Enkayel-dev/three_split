@@ -293,11 +293,21 @@ export function useSceneBridge() {
       }
 
       default:
-        sendResponse({
-          type: 'error',
-          payload: `Unknown message type: ${message.type}`,
-          requestId: message.requestId,
-        })
+        // Ignore response messages to avoid infinite loops
+        const responseTypes = [
+          'snapshot', 'objects', 'object', 'created', 'updated', 'deleted',
+          'navigated', 'material_updated', 'registered_objects', 'animation_state',
+          'animation_state_updated', 'material_params', 'material_params_updated',
+          'animation_triggered', 'animations_list', 'error'
+        ]
+        if (!responseTypes.includes(message.type)) {
+          console.warn('MCP Bridge: Unknown message type:', message.type)
+          sendResponse({
+            type: 'error',
+            payload: `Unknown message type: ${message.type}`,
+            requestId: message.requestId,
+          })
+        }
     }
   }, [getSnapshot])
 
