@@ -5,6 +5,7 @@ import Scene from './components/scenes/Scene'
 import { useAccessibilityStore } from './store'
 import LoadingScreen from './components/ui/LoadingScreen'
 import HTMLOverlay from './components/ui/HTMLOverlay'
+import { SceneBridge } from './mcp'
 
 function App() {
   const { reducedMotion, reducedTransparency } = useAccessibilityStore()
@@ -53,6 +54,9 @@ function App() {
           Multi-disciplinary consultancy for businesses that think holistically.
         </p>
       </main>
+
+      {/* MCP Scene Bridge - connects to Claude Desktop */}
+      <SceneBridge />
     </>
   )
 }

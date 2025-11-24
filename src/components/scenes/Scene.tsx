@@ -2,13 +2,14 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Environment, ContactShadows, Stars, Grid } from '@react-three/drei'
 import * as THREE from 'three'
-import { useNavigationStore } from '@/store'
+import { useNavigationStore, useSceneObjectsStore } from '@/store'
 import HomeHub from './HomeHub'
 import ConsultingRoom from './ConsultingRoom'
 import SoftwareRoom from './SoftwareRoom'
 import ConstructionRoom from './ConstructionRoom'
 import ContactNode from './ContactNode'
 import CameraController from '@/systems/camera/CameraController'
+import { DynamicObjects } from '@/mcp'
 
 interface SceneProps {
   reducedMotion: boolean
@@ -17,6 +18,7 @@ interface SceneProps {
 
 export default function Scene({ reducedMotion, reducedTransparency }: SceneProps) {
   const { currentNode } = useNavigationStore()
+  const { sceneObjects } = useSceneObjectsStore()
   const groupRef = useRef<THREE.Group>(null)
 
   // Subtle ambient rotation for living feel (disabled in reduced motion)
@@ -122,6 +124,14 @@ export default function Scene({ reducedMotion, reducedTransparency }: SceneProps
             reducedTransparency={reducedTransparency}
           />
         )}
+
+        {/* MCP Dynamic Objects */}
+        <DynamicObjects
+          objects={sceneObjects}
+          currentNode={currentNode}
+          reducedMotion={reducedMotion}
+          reducedTransparency={reducedTransparency}
+        />
       </group>
     </>
   )
