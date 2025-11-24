@@ -204,6 +204,75 @@ export class SceneBridge {
     return await this.sendRequest('set_material', params)
   }
 
+  // New animation control methods
+
+  async getRegisteredObjects(filter?: { node?: string; type?: string }): Promise<unknown[]> {
+    try {
+      return await this.sendRequest<unknown[]>('get_registered_objects', filter)
+    } catch {
+      return this.getMockRegisteredObjects()
+    }
+  }
+
+  async getAnimationState(objectId: string): Promise<unknown> {
+    return await this.sendRequest('get_animation_state', { objectId })
+  }
+
+  async setAnimationState(objectId: string, state: {
+    hovered?: boolean
+    pressed?: boolean
+    loading?: boolean
+    disabled?: boolean
+  }): Promise<{ success: boolean; message: string }> {
+    return await this.sendRequest('set_animation_state', { objectId, state })
+  }
+
+  async getMaterialParams(objectId: string): Promise<unknown> {
+    return await this.sendRequest('get_material_params', { objectId })
+  }
+
+  async setMaterialParams(objectId: string, params: {
+    transmission?: number
+    roughness?: number
+    ior?: number
+    emissiveIntensity?: number
+    color?: string
+    envMapIntensity?: number
+    clearcoat?: number
+  }): Promise<{ success: boolean; message: string }> {
+    return await this.sendRequest('set_material_params', { objectId, params })
+  }
+
+  async triggerAnimation(
+    objectId: string,
+    animation: string,
+    params?: Record<string, unknown>
+  ): Promise<{ success: boolean; message: string }> {
+    return await this.sendRequest('trigger_animation', { objectId, animation, params })
+  }
+
+  async listAnimations(objectId?: string, type?: string): Promise<{ animations: string[] }> {
+    return await this.sendRequest('list_animations', { objectId, type })
+  }
+
+  private getMockRegisteredObjects(): unknown[] {
+    return [
+      {
+        id: 'glassbutton_1',
+        type: 'GlassButton',
+        name: 'Get Started',
+        position: [0, 0.5, 0],
+        rotation: [0, 0, 0],
+        scale: [1, 1, 1],
+        parentNode: 'home',
+        visible: true,
+        properties: { label: 'Get Started', variant: 'primary', size: 'md' },
+        animationState: { hovered: false, pressed: false, loading: false, disabled: false },
+        materialState: { transmission: 0.85, roughness: 0.08, ior: 1.5 },
+      },
+    ]
+  }
+
   private getMockSnapshot(): SceneSnapshot {
     return {
       camera: {

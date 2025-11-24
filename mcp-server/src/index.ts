@@ -30,6 +30,7 @@ import { sceneTools, handleSceneTool } from './tools/scene.js'
 import { objectTools, handleObjectTool } from './tools/objects.js'
 import { navigationTools, handleNavigationTool } from './tools/navigation.js'
 import { materialTools, handleMaterialTool } from './tools/materials.js'
+import { animationTools, handleAnimationTool } from './tools/animations.js'
 
 // Initialize scene bridge for WebSocket connection to React app
 const sceneBridge = new SceneBridge(process.env.SCENE_WS_URL || 'ws://localhost:3001')
@@ -56,6 +57,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...objectTools,
       ...navigationTools,
       ...materialTools,
+      ...animationTools,
     ],
   }
 })
@@ -83,6 +85,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     // Material tools
     if (['set_material'].includes(name)) {
       return await handleMaterialTool(name, args, sceneBridge)
+    }
+
+    // Animation tools
+    if ([
+      'get_registered_objects',
+      'get_animation_state',
+      'set_animation_state',
+      'get_material_params',
+      'set_material_params',
+      'trigger_animation',
+      'list_animations',
+    ].includes(name)) {
+      return await handleAnimationTool(name, args, sceneBridge)
     }
 
     return {

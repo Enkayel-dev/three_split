@@ -1,11 +1,22 @@
 /**
  * WebSocket bridge connecting React app to MCP server
- * Runs a WebSocket server that the MCP server connects to
+ * Handles both dynamic objects and registered static objects
  */
 
 import { useEffect, useRef, useCallback } from 'react'
 import { useAppStore } from '@/store'
-import type { BridgeMessage, SceneSnapshot, SceneObject } from './types'
+import { SceneRegistry } from '@/registry'
+import type {
+  BridgeMessage,
+  SceneSnapshot,
+  SceneObject,
+  GetRegisteredObjectsPayload,
+  SetAnimationStatePayload,
+  GetMaterialParamsPayload,
+  SetMaterialParamsPayload,
+  TriggerAnimationPayload,
+  ListAnimationsPayload,
+} from './types'
 
 const WS_PORT = 3001
 
@@ -24,6 +35,7 @@ export function useSceneBridge() {
       currentNode: state.currentNode,
       isTransitioning: state.isTransitioning,
       objects: state.sceneObjects,
+      registeredObjects: SceneRegistry.getSnapshot(),
     }
   }, [])
 
@@ -59,7 +71,25 @@ export function useSceneBridge() {
 
       case 'get_object': {
         const { objectId } = message.payload as { objectId: string }
-        const object = state.sceneObjects.find(o => o.id === objectId)
+        // Check dynamic objects first
+        let object: SceneObject | undefined = state.sceneObjects.find(o => o.id === objectId)
+        // Then check registered objects
+        if (!object) {
+          const registered = SceneRegistry.get(objectId)
+          if (registered) {
+            object = {
+              id: registered.id,
+              type: registered.type as SceneObject['type'],
+              position: registered.position,
+              rotation: registered.rotation,
+              scale: registered.scale,
+              properties: registered.properties,
+              parentNode: registered.parentNode,
+              visible: registered.visible,
+              material: registered.materialState,
+            }
+          }
+        }
         sendResponse({
           type: 'object',
           payload: object || null,
@@ -135,6 +165,133 @@ export function useSceneBridge() {
         break
       }
 
+      // New commands for registered objects
+      case 'get_registered_objects': {
+        const filter = message.payload as GetRegisteredObjectsPayload | undefined
+        let objects = SceneRegistry.getSnapshot()
+        if (filter?.node) {
+          objects = objects.filter(o => o.parentNode === filter.node || o.parentNode === 'global')
+        }
+        if (filter?.type) {
+          objects = objects.filter(o => o.type === filter.type)
+        }
+        sendResponse({
+          type: 'registered_objects',
+          payload: objects,
+          requestId: message.requestId,
+        })
+        break
+      }
+
+      case 'get_animation_state': {
+        const { objectId } = message.payload as { objectId: string }
+        const obj = SceneRegistry.get(objectId)
+        if (obj) {
+          sendResponse({
+            type: 'animation_state',
+            payload: { objectId, state: obj.animationState },
+            requestId: message.requestId,
+          })
+        } else {
+          sendResponse({
+            type: 'error',
+            payload: `Object not found: ${objectId}`,
+            requestId: message.requestId,
+          })
+        }
+        break
+      }
+
+      case 'set_animation_state': {
+        const { objectId, state: animState } = message.payload as SetAnimationStatePayload
+        SceneRegistry.updateAnimationState(objectId, animState)
+        sendResponse({
+          type: 'animation_state_updated',
+          payload: { success: true, message: 'Animation state updated', objectId },
+          requestId: message.requestId,
+        })
+        break
+      }
+
+      case 'get_material_params': {
+        const { objectId } = message.payload as GetMaterialParamsPayload
+        const obj = SceneRegistry.get(objectId)
+        if (obj) {
+          sendResponse({
+            type: 'material_params',
+            payload: { objectId, params: obj.materialState },
+            requestId: message.requestId,
+          })
+        } else {
+          sendResponse({
+            type: 'error',
+            payload: `Object not found: ${objectId}`,
+            requestId: message.requestId,
+          })
+        }
+        break
+      }
+
+      case 'set_material_params': {
+        const { objectId, params } = message.payload as SetMaterialParamsPayload
+        SceneRegistry.updateMaterialState(objectId, params)
+        sendResponse({
+          type: 'material_params_updated',
+          payload: { success: true, message: 'Material params updated', objectId },
+          requestId: message.requestId,
+        })
+        break
+      }
+
+      case 'trigger_animation': {
+        const { objectId, animation, params } = message.payload as TriggerAnimationPayload
+        const success = SceneRegistry.triggerAnimation(objectId, animation, params)
+        sendResponse({
+          type: 'animation_triggered',
+          payload: {
+            success,
+            message: success ? `Triggered ${animation}` : 'Object not found or no animation handler',
+            objectId,
+            animation,
+          },
+          requestId: message.requestId,
+        })
+        break
+      }
+
+      case 'list_animations': {
+        const payload = message.payload as ListAnimationsPayload | undefined
+        const objectId = payload?.objectId
+        const type = payload?.type
+        let animations: string[] = []
+        let responseType = type
+
+        if (objectId) {
+          const obj = SceneRegistry.get(objectId)
+          if (obj) {
+            animations = SceneRegistry.getAvailableAnimations(obj.type)
+            responseType = obj.type
+          }
+        } else if (type) {
+          animations = SceneRegistry.getAvailableAnimations(type as any)
+        } else {
+          // Return all unique animations
+          const allTypes = ['GlassButton', 'GlassCard', 'GlassPanel'] as const
+          const allAnimations = new Set<string>()
+          allTypes.forEach(t => {
+            SceneRegistry.getAvailableAnimations(t).forEach(a => allAnimations.add(a))
+          })
+          animations = Array.from(allAnimations)
+        }
+
+        sendResponse({
+          type: 'animations_list',
+          payload: { objectId, type: responseType, animations },
+          requestId: message.requestId,
+        })
+        break
+      }
+
       default:
         sendResponse({
           type: 'error',
@@ -145,13 +302,6 @@ export function useSceneBridge() {
   }, [getSnapshot])
 
   useEffect(() => {
-    // In browser, we'll use a simple approach - the MCP server will connect to us
-    // For development, we create a WebSocket that listens for connections
-
-    // Note: Browser can't create WebSocket server, so we need a different approach
-    // The React app will connect to a relay server or use polling
-    // For now, we'll set up the client side that connects to the MCP server's relay
-
     const connectToRelay = () => {
       try {
         const ws = new WebSocket(`ws://localhost:${WS_PORT}`)

@@ -1,11 +1,14 @@
-import { useRef, useState, useMemo } from 'react'
+import { useRef, useState, useMemo, useEffect, useCallback } from 'react'
 import { useFrame, ThreeEvent } from '@react-three/fiber'
 import { RoundedBox, Text } from '@react-three/drei'
 import { useSpring, animated } from '@react-spring/three'
 import * as THREE from 'three'
 import { createLiquidGlassMaterial } from '@/materials/LiquidGlassMaterial'
+import { useSceneRegistry, type MaterialState, type AnimationState } from '@/registry'
 
 interface GlassCardProps {
+  id?: string
+  name?: string
   position?: [number, number, number]
   rotation?: [number, number, number]
   width?: number
@@ -15,10 +18,13 @@ interface GlassCardProps {
   subtitle?: string
   reducedMotion?: boolean
   reducedTransparency?: boolean
+  parentNode?: string
   onClick?: () => void
 }
 
 export default function GlassCard({
+  id,
+  name,
   position = [0, 0, 0],
   rotation = [0, 0, 0],
   width = 0.8,
@@ -28,12 +34,82 @@ export default function GlassCard({
   subtitle,
   reducedMotion = false,
   reducedTransparency = false,
+  parentNode = 'global',
   onClick,
 }: GlassCardProps) {
   const groupRef = useRef<THREE.Group>(null)
   const meshRef = useRef<THREE.Mesh>(null)
   const [hovered, setHovered] = useState(false)
   const [pressed, setPressed] = useState(false)
+
+  // Register with scene registry for MCP control
+  const {
+    updateAnimationState,
+    // updateMaterialState - available for future use
+    setAnimationHandler,
+    setMaterialHandler,
+    setStateHandler,
+  } = useSceneRegistry({
+    id,
+    type: 'GlassCard',
+    name: name || title,
+    position,
+    rotation,
+    scale: [1, 1, 1],
+    parentNode,
+    visible: true,
+    properties: {
+      title,
+      subtitle,
+      width,
+      height,
+      thickness,
+    },
+    meshRef,
+  })
+
+  // Set up animation handler for MCP control
+  useEffect(() => {
+    setAnimationHandler((animation: string, _params?: Record<string, unknown>) => {
+      switch (animation) {
+        case 'flip':
+          // Could trigger a flip animation
+          break
+        case 'tilt':
+          // Tilt the card
+          break
+        case 'reveal':
+          // Reveal animation
+          break
+        case 'pulse':
+          // Pulse effect
+          break
+      }
+    })
+  }, [setAnimationHandler])
+
+  // Handle MCP material updates
+  useEffect(() => {
+    setMaterialHandler((params: Partial<MaterialState>) => {
+      if (!meshRef.current) return
+      const mat = meshRef.current.material as THREE.MeshPhysicalMaterial
+
+      if (params.transmission !== undefined) mat.transmission = params.transmission
+      if (params.roughness !== undefined) mat.roughness = params.roughness
+      if (params.ior !== undefined) mat.ior = params.ior
+      if (params.color !== undefined) mat.color.set(params.color)
+
+      mat.needsUpdate = true
+    })
+  }, [setMaterialHandler])
+
+  // Handle MCP state updates
+  useEffect(() => {
+    setStateHandler((state: Partial<AnimationState>) => {
+      if (state.hovered !== undefined) setHovered(state.hovered)
+      if (state.pressed !== undefined) setPressed(state.pressed)
+    })
+  }, [setStateHandler])
 
   // Create material
   const material = useMemo(
@@ -48,6 +124,14 @@ export default function GlassCard({
     const t = state.clock.elapsedTime + idleOffset.current
     groupRef.current.position.y = position[1] + Math.sin(t * 0.5) * 0.02
     groupRef.current.rotation.y = rotation[1] + Math.sin(t * 0.3) * 0.02
+
+    // Update registry with current state
+    updateAnimationState({
+      hovered,
+      pressed,
+      idle: true,
+      currentScale: [1, 1, 1],
+    })
   })
 
   // Interaction springs
@@ -60,33 +144,33 @@ export default function GlassCard({
   })
 
   // Event handlers
-  const handlePointerEnter = (e: ThreeEvent<PointerEvent>) => {
+  const handlePointerEnter = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
     setHovered(true)
     document.body.style.cursor = 'pointer'
-  }
+  }, [])
 
-  const handlePointerLeave = (e: ThreeEvent<PointerEvent>) => {
+  const handlePointerLeave = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
     setHovered(false)
     setPressed(false)
     document.body.style.cursor = 'auto'
-  }
+  }, [])
 
-  const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
+  const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
     setPressed(true)
-  }
+  }, [])
 
-  const handlePointerUp = (e: ThreeEvent<PointerEvent>) => {
+  const handlePointerUp = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
     setPressed(false)
-  }
+  }, [])
 
-  const handleClick = (e: ThreeEvent<MouseEvent>) => {
+  const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation()
     onClick?.()
-  }
+  }, [onClick])
 
   return (
     <group ref={groupRef} position={position} rotation={rotation}>
