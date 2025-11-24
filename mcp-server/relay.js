@@ -3,10 +3,10 @@
  * Run with: node relay.js
  */
 
-const WebSocket = require('ws');
+import { WebSocketServer, WebSocket } from 'ws';
 
 const PORT = 3001;
-const wss = new WebSocket.Server({ port: PORT });
+const wss = new WebSocketServer({ port: PORT });
 
 let clients = [];
 
