@@ -14,6 +14,11 @@
  * - get_object: Get object details
  * - navigate_to: Move camera
  * - set_material: Change object materials
+ * - save_scene: Save scene to JSON file with backup
+ * - load_scene: Load scene from JSON file
+ * - export_scene: Export scene as JSON string
+ * - list_scene_backups: List available backups
+ * - restore_scene_backup: Restore from backup
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
@@ -31,6 +36,7 @@ import { objectTools, handleObjectTool } from './tools/objects.js'
 import { navigationTools, handleNavigationTool } from './tools/navigation.js'
 import { materialTools, handleMaterialTool } from './tools/materials.js'
 import { animationTools, handleAnimationTool } from './tools/animations.js'
+import { persistenceTools, handlePersistenceTool } from './tools/persistence.js'
 
 // Initialize scene bridge for WebSocket connection to React app
 const sceneBridge = new SceneBridge(process.env.SCENE_WS_URL || 'ws://localhost:3001')
@@ -58,6 +64,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...navigationTools,
       ...materialTools,
       ...animationTools,
+      ...persistenceTools,
     ],
   }
 })
@@ -98,6 +105,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       'list_animations',
     ].includes(name)) {
       return await handleAnimationTool(name, args, sceneBridge)
+    }
+
+    // Persistence tools
+    if ([
+      'save_scene',
+      'load_scene',
+      'export_scene',
+      'list_scene_backups',
+      'restore_scene_backup',
+    ].includes(name)) {
+      return await handlePersistenceTool(name, args, sceneBridge)
     }
 
     return {
