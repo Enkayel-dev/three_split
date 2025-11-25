@@ -5,20 +5,71 @@
  *
  * Enables Claude Desktop to view and edit 3D scenes in the Liquid Glass website.
  *
- * Tools:
+ * Scene Tools:
  * - scene_snapshot: Get current scene state
+ * - list_objects: List scene objects
+ * - get_object: Get object details
+ *
+ * Object Tools:
  * - create_object: Add new 3D objects
  * - edit_object: Modify existing objects
  * - delete_object: Remove objects
- * - list_objects: List scene objects
- * - get_object: Get object details
+ *
+ * Navigation Tools:
  * - navigate_to: Move camera
+ *
+ * Material Tools:
  * - set_material: Change object materials
+ *
+ * Animation Tools:
+ * - get_registered_objects, get_animation_state, set_animation_state
+ * - get_material_params, set_material_params, trigger_animation, list_animations
+ *
+ * Persistence Tools (Phase 3):
  * - save_scene: Save scene to JSON file with backup
  * - load_scene: Load scene from JSON file
  * - export_scene: Export scene as JSON string
  * - list_scene_backups: List available backups
  * - restore_scene_backup: Restore from backup
+ *
+ * Scene Query Tools (Phase 4):
+ * - query_scene: Advanced scene querying with filters
+ * - get_scene_stats: Get scene statistics
+ * - update_scene_metadata: Update scene metadata
+ * - find_objects_near: Find objects near a position
+ * - get_object_hierarchy: Get object parent/child tree
+ *
+ * Object Manipulation Tools (Phase 4):
+ * - clone_object: Clone an object with offset
+ * - move_object: Move object (position/rotation/scale)
+ * - show_object: Make object visible
+ * - hide_object: Make object invisible
+ * - rename_object: Change object name
+ * - duplicate_object: Duplicate in patterns (line/grid/circle)
+ *
+ * Batch Operations Tools (Phase 4):
+ * - batch_edit_objects: Edit multiple objects at once
+ * - batch_delete_objects: Delete multiple objects
+ * - batch_move_objects: Move multiple objects together
+ * - batch_set_property: Set property for multiple objects
+ * - select_objects: Select objects by criteria
+ * - batch_transform: Transform multiple objects
+ *
+ * Scene Organization Tools (Phase 4):
+ * - create_group: Create new group
+ * - add_to_group: Add objects to group
+ * - remove_from_group: Remove objects from group
+ * - list_groups: List all groups
+ * - ungroup: Dissolve a group
+ * - get_group_bounds: Get group bounding box
+ *
+ * Validation Tools (Phase 4):
+ * - validate_scene: Validate entire scene
+ * - check_scene_health: Check for common issues
+ * - validate_object: Validate single object
+ * - fix_common_issues: Auto-fix common problems
+ * - check_performance: Analyze performance
+ * - validate_references: Check object references
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
@@ -37,6 +88,11 @@ import { navigationTools, handleNavigationTool } from './tools/navigation.js'
 import { materialTools, handleMaterialTool } from './tools/materials.js'
 import { animationTools, handleAnimationTool } from './tools/animations.js'
 import { persistenceTools, handlePersistenceTool } from './tools/persistence.js'
+import { sceneQueryTools, handleSceneQueryTool } from './tools/sceneQuery.js'
+import { objectManipulationTools, handleObjectManipulationTool } from './tools/objectManipulation.js'
+import { batchOperationsTools, handleBatchOperationsTool } from './tools/batchOperations.js'
+import { sceneOrganizationTools, handleSceneOrganizationTool } from './tools/sceneOrganization.js'
+import { validationTools, handleValidationTool } from './tools/validation.js'
 
 // Initialize scene bridge for WebSocket connection to React app
 const sceneBridge = new SceneBridge(process.env.SCENE_WS_URL || 'ws://localhost:3001')
@@ -65,6 +121,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...materialTools,
       ...animationTools,
       ...persistenceTools,
+      ...sceneQueryTools,
+      ...objectManipulationTools,
+      ...batchOperationsTools,
+      ...sceneOrganizationTools,
+      ...validationTools,
     ],
   }
 })
@@ -116,6 +177,65 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       'restore_scene_backup',
     ].includes(name)) {
       return await handlePersistenceTool(name, args, sceneBridge)
+    }
+
+    // Scene query tools
+    if ([
+      'query_scene',
+      'get_scene_stats',
+      'update_scene_metadata',
+      'find_objects_near',
+      'get_object_hierarchy',
+    ].includes(name)) {
+      return await handleSceneQueryTool(name, args, sceneBridge)
+    }
+
+    // Object manipulation tools
+    if ([
+      'clone_object',
+      'move_object',
+      'show_object',
+      'hide_object',
+      'rename_object',
+      'duplicate_object',
+    ].includes(name)) {
+      return await handleObjectManipulationTool(name, args, sceneBridge)
+    }
+
+    // Batch operations tools
+    if ([
+      'batch_edit_objects',
+      'batch_delete_objects',
+      'batch_move_objects',
+      'batch_set_property',
+      'select_objects',
+      'batch_transform',
+    ].includes(name)) {
+      return await handleBatchOperationsTool(name, args, sceneBridge)
+    }
+
+    // Scene organization tools
+    if ([
+      'create_group',
+      'add_to_group',
+      'remove_from_group',
+      'list_groups',
+      'ungroup',
+      'get_group_bounds',
+    ].includes(name)) {
+      return await handleSceneOrganizationTool(name, args, sceneBridge)
+    }
+
+    // Validation tools
+    if ([
+      'validate_scene',
+      'check_scene_health',
+      'validate_object',
+      'fix_common_issues',
+      'check_performance',
+      'validate_references',
+    ].includes(name)) {
+      return await handleValidationTool(name, args, sceneBridge)
     }
 
     return {
