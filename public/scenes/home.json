@@ -1,0 +1,214 @@
+{
+  "id": "home",
+  "name": "Home Hub",
+  "version": "1.0.0",
+  "metadata": {
+    "description": "Main navigation hub with consulting, software, and construction cards",
+    "created": "2025-01-25T00:00:00Z",
+    "modified": "2025-01-25T00:00:00Z",
+    "tags": ["navigation", "home", "main"]
+  },
+  "camera": {
+    "position": [-3, 1.5, 3],
+    "fov": 50,
+    "near": 0.1,
+    "far": 100
+  },
+  "background": {
+    "type": "color",
+    "color": "#0a0a12",
+    "stars": {
+      "enabled": true,
+      "count": 1000,
+      "radius": 50,
+      "depth": 50,
+      "speed": 0.5,
+      "saturation": 0,
+      "fade": true
+    },
+    "grid": {
+      "enabled": true,
+      "position": [0, -0.5, 0],
+      "cellSize": 0.5,
+      "cellThickness": 0.5,
+      "cellColor": "#1a1a2e",
+      "sectionSize": 2,
+      "sectionThickness": 1,
+      "sectionColor": "#2a2a4e",
+      "fadeDistance": 15,
+      "fadeStrength": 1,
+      "followCamera": false,
+      "infiniteGrid": true
+    }
+  },
+  "lighting": {
+    "ambient": {
+      "intensity": 0.5
+    },
+    "directional": [
+      {
+        "position": [5, 5, 5],
+        "intensity": 1,
+        "castShadow": true,
+        "shadowMapSize": 1024
+      }
+    ],
+    "point": [
+      {
+        "position": [-5, 5, -5],
+        "intensity": 0.5,
+        "color": "#4A90D9"
+      }
+    ]
+  },
+  "environment": {
+    "preset": "city",
+    "background": false
+  },
+  "objects": [
+    {
+      "id": "hero_panel",
+      "type": "GlassPanel",
+      "name": "Hero Panel",
+      "transform": {
+        "position": [0, 1.2, 0],
+        "rotation": [0, 0, 0],
+        "scale": [1, 1, 1]
+      },
+      "glassProps": {
+        "width": 2.0,
+        "height": 1.2,
+        "thickness": 0.04
+      },
+      "interactions": {
+        "onClick": {
+          "type": "navigate",
+          "target": "consulting"
+        }
+      },
+      "animations": {
+        "enabled": true,
+        "types": ["float"],
+        "autoPlay": ["float"]
+      },
+      "visible": true
+    },
+    {
+      "id": "consulting_card",
+      "type": "GlassCard",
+      "name": "Consulting Navigation",
+      "transform": {
+        "position": [-1.5, 0.8, -1.2],
+        "rotation": [0, 0.2, 0],
+        "scale": [1, 1, 1]
+      },
+      "glassProps": {
+        "title": "Consulting",
+        "subtitle": "Streamline operations"
+      },
+      "interactions": {
+        "onClick": {
+          "type": "navigate",
+          "target": "consulting"
+        }
+      },
+      "animations": {
+        "enabled": true,
+        "types": ["hover", "click"],
+        "autoPlay": []
+      },
+      "visible": true
+    },
+    {
+      "id": "software_card",
+      "type": "GlassCard",
+      "name": "Software Navigation",
+      "transform": {
+        "position": [0, 0.8, -1.2],
+        "rotation": [0, 0, 0],
+        "scale": [1, 1, 1]
+      },
+      "glassProps": {
+        "title": "Software",
+        "subtitle": "Build custom tools"
+      },
+      "interactions": {
+        "onClick": {
+          "type": "navigate",
+          "target": "software"
+        }
+      },
+      "animations": {
+        "enabled": true,
+        "types": ["hover", "click"],
+        "autoPlay": []
+      },
+      "visible": true
+    },
+    {
+      "id": "construction_card",
+      "type": "GlassCard",
+      "name": "Construction Navigation",
+      "transform": {
+        "position": [1.5, 0.8, -1.2],
+        "rotation": [0, -0.2, 0],
+        "scale": [1, 1, 1]
+      },
+      "glassProps": {
+        "title": "Construction",
+        "subtitle": "Design spaces"
+      },
+      "interactions": {
+        "onClick": {
+          "type": "navigate",
+          "target": "construction"
+        }
+      },
+      "animations": {
+        "enabled": true,
+        "types": ["hover", "click"],
+        "autoPlay": []
+      },
+      "visible": true
+    },
+    {
+      "id": "floating_logo",
+      "type": "mesh",
+      "name": "Floating Logo",
+      "transform": {
+        "position": [0, 2, -0.5],
+        "rotation": [0, 0, 0],
+        "scale": [1, 1, 1]
+      },
+      "geometry": {
+        "type": "icosahedron",
+        "args": [0.15, 0]
+      },
+      "material": {
+        "type": "MeshStandardMaterial",
+        "color": "#4A90D9",
+        "emissive": "#4A90D9",
+        "emissiveIntensity": 0.3,
+        "metalness": 0.8,
+        "roughness": 0.2
+      },
+      "animations": {
+        "enabled": true,
+        "types": ["rotation"],
+        "autoPlay": ["rotation"]
+      },
+      "visible": true
+    }
+  ],
+  "animations": {
+    "ambient": {
+      "enabled": true,
+      "type": "rotation",
+      "params": {
+        "speed": 0.05,
+        "amplitude": 0.01,
+        "axis": "y"
+      }
+    }
+  }
+}

@@ -1,0 +1,482 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://enkayel.com/schemas/scene-definition.json",
+  "title": "Scene Definition",
+  "description": "Schema for defining 3D scenes in the Liquid Glass scene builder",
+  "type": "object",
+  "required": ["id", "name", "version", "metadata", "camera", "background", "lighting", "environment", "objects"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique scene identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable scene name"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version number"
+    },
+    "metadata": {
+      "$ref": "#/definitions/sceneMetadata"
+    },
+    "camera": {
+      "$ref": "#/definitions/cameraDefinition"
+    },
+    "background": {
+      "$ref": "#/definitions/backgroundDefinition"
+    },
+    "lighting": {
+      "$ref": "#/definitions/lightingDefinition"
+    },
+    "environment": {
+      "$ref": "#/definitions/environmentDefinition"
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/sceneObjectDefinition"
+      }
+    },
+    "animations": {
+      "$ref": "#/definitions/sceneAnimations"
+    }
+  },
+  "definitions": {
+    "sceneMetadata": {
+      "type": "object",
+      "required": ["created", "modified"],
+      "properties": {
+        "author": { "type": "string" },
+        "description": { "type": "string" },
+        "created": { "type": "string", "format": "date-time" },
+        "modified": { "type": "string", "format": "date-time" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "cameraDefinition": {
+      "type": "object",
+      "required": ["position", "fov"],
+      "properties": {
+        "position": { "$ref": "#/definitions/vector3" },
+        "fov": { "type": "number", "minimum": 1, "maximum": 179 },
+        "near": { "type": "number", "minimum": 0.01 },
+        "far": { "type": "number", "minimum": 1 },
+        "target": { "$ref": "#/definitions/vector3" }
+      }
+    },
+    "backgroundDefinition": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["color", "gradient", "sphere", "hemisphere", "skybox"]
+        },
+        "color": { "$ref": "#/definitions/color" },
+        "gradient": { "$ref": "#/definitions/gradientDefinition" },
+        "sphere": { "$ref": "#/definitions/sphereBackgroundDefinition" },
+        "stars": { "$ref": "#/definitions/starsDefinition" },
+        "grid": { "$ref": "#/definitions/gridDefinition" }
+      }
+    },
+    "gradientDefinition": {
+      "type": "object",
+      "required": ["colors"],
+      "properties": {
+        "colors": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/color" },
+          "minItems": 2
+        },
+        "stops": {
+          "type": "array",
+          "items": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["vertical", "horizontal", "radial"]
+        }
+      }
+    },
+    "sphereBackgroundDefinition": {
+      "type": "object",
+      "required": ["radius", "material"],
+      "properties": {
+        "radius": { "type": "number", "minimum": 1 },
+        "segments": { "type": "number", "minimum": 8, "default": 64 },
+        "material": { "$ref": "#/definitions/sphereBackgroundMaterial" },
+        "invertNormals": { "type": "boolean", "default": true }
+      }
+    },
+    "sphereBackgroundMaterial": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["shader", "texture", "color", "gradient"]
+        },
+        "shader": {
+          "type": "object",
+          "properties": {
+            "vertex": { "type": "string" },
+            "fragment": { "type": "string" },
+            "uniforms": { "type": "object" }
+          },
+          "required": ["fragment"]
+        },
+        "texture": { "type": "string" },
+        "color": { "$ref": "#/definitions/color" },
+        "gradient": { "$ref": "#/definitions/gradientDefinition" }
+      }
+    },
+    "starsDefinition": {
+      "type": "object",
+      "required": ["enabled", "count", "radius"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "count": { "type": "number", "minimum": 0 },
+        "radius": { "type": "number", "minimum": 1 },
+        "depth": { "type": "number", "minimum": 1 },
+        "speed": { "type": "number", "minimum": 0 },
+        "saturation": { "type": "number", "minimum": 0, "maximum": 1 },
+        "fade": { "type": "boolean" }
+      }
+    },
+    "gridDefinition": {
+      "type": "object",
+      "required": ["enabled", "cellSize", "fadeDistance"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "position": { "$ref": "#/definitions/vector3" },
+        "cellSize": { "type": "number", "minimum": 0.1 },
+        "cellThickness": { "type": "number", "minimum": 0.1 },
+        "cellColor": { "$ref": "#/definitions/color" },
+        "sectionSize": { "type": "number", "minimum": 1 },
+        "sectionThickness": { "type": "number", "minimum": 0.1 },
+        "sectionColor": { "$ref": "#/definitions/color" },
+        "fadeDistance": { "type": "number", "minimum": 1 },
+        "fadeStrength": { "type": "number", "minimum": 0, "maximum": 1 },
+        "followCamera": { "type": "boolean" },
+        "infiniteGrid": { "type": "boolean" }
+      }
+    },
+    "lightingDefinition": {
+      "type": "object",
+      "properties": {
+        "ambient": {
+          "type": "object",
+          "required": ["intensity"],
+          "properties": {
+            "intensity": { "type": "number", "minimum": 0 },
+            "color": { "$ref": "#/definitions/color" }
+          }
+        },
+        "directional": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["position", "intensity"],
+            "properties": {
+              "position": { "$ref": "#/definitions/vector3" },
+              "intensity": { "type": "number", "minimum": 0 },
+              "color": { "$ref": "#/definitions/color" },
+              "castShadow": { "type": "boolean" },
+              "shadowMapSize": { "type": "number", "minimum": 256 }
+            }
+          }
+        },
+        "point": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["position", "intensity"],
+            "properties": {
+              "position": { "$ref": "#/definitions/vector3" },
+              "intensity": { "type": "number", "minimum": 0 },
+              "color": { "$ref": "#/definitions/color" },
+              "distance": { "type": "number", "minimum": 0 },
+              "decay": { "type": "number", "minimum": 0 }
+            }
+          }
+        },
+        "spot": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["position", "target", "intensity"],
+            "properties": {
+              "position": { "$ref": "#/definitions/vector3" },
+              "target": { "$ref": "#/definitions/vector3" },
+              "intensity": { "type": "number", "minimum": 0 },
+              "color": { "$ref": "#/definitions/color" },
+              "angle": { "type": "number", "minimum": 0, "maximum": 1.5708 },
+              "penumbra": { "type": "number", "minimum": 0, "maximum": 1 },
+              "distance": { "type": "number", "minimum": 0 },
+              "decay": { "type": "number", "minimum": 0 },
+              "castShadow": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "environmentDefinition": {
+      "type": "object",
+      "properties": {
+        "preset": {
+          "type": "string",
+          "enum": ["city", "sunset", "dawn", "night", "warehouse", "forest", "apartment", "studio", "park", "lobby"]
+        },
+        "background": { "type": "boolean" },
+        "blur": { "type": "number", "minimum": 0, "maximum": 1 },
+        "files": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "sceneObjectDefinition": {
+      "type": "object",
+      "required": ["id", "type", "transform", "visible"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["GlassButton", "GlassCard", "GlassPanel", "mesh", "group"]
+        },
+        "name": { "type": "string" },
+        "transform": { "$ref": "#/definitions/transformDefinition" },
+        "glassProps": { "$ref": "#/definitions/glassComponentProps" },
+        "material": { "$ref": "#/definitions/materialDefinition" },
+        "geometry": { "$ref": "#/definitions/geometryDefinition" },
+        "interactions": { "$ref": "#/definitions/interactionDefinition" },
+        "animations": { "$ref": "#/definitions/objectAnimationDefinition" },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/sceneObjectDefinition" }
+        },
+        "visible": { "type": "boolean" },
+        "renderOrder": { "type": "number" },
+        "castShadow": { "type": "boolean" },
+        "receiveShadow": { "type": "boolean" },
+        "parentId": { "type": "string" },
+        "constraints": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/constraintDefinition" }
+        },
+        "userData": { "type": "object" }
+      }
+    },
+    "transformDefinition": {
+      "type": "object",
+      "required": ["position", "rotation", "scale"],
+      "properties": {
+        "position": { "$ref": "#/definitions/vector3" },
+        "rotation": { "$ref": "#/definitions/vector3" },
+        "scale": { "$ref": "#/definitions/vector3" }
+      }
+    },
+    "glassComponentProps": {
+      "type": "object",
+      "properties": {
+        "width": { "type": "number", "minimum": 0.1 },
+        "height": { "type": "number", "minimum": 0.1 },
+        "thickness": { "type": "number", "minimum": 0.01 },
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "label": { "type": "string" },
+        "variant": {
+          "type": "string",
+          "enum": ["primary", "secondary", "ghost"]
+        },
+        "size": {
+          "type": "string",
+          "enum": ["small", "medium", "large"]
+        },
+        "disabled": { "type": "boolean" },
+        "loading": { "type": "boolean" }
+      }
+    },
+    "materialDefinition": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["MeshPhysicalMaterial", "MeshStandardMaterial", "MeshBasicMaterial", "MeshLambertMaterial", "MeshPhongMaterial"]
+        },
+        "color": { "$ref": "#/definitions/color" },
+        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "transparent": { "type": "boolean" },
+        "side": {
+          "type": "string",
+          "enum": ["front", "back", "double"]
+        },
+        "transmission": { "type": "number", "minimum": 0, "maximum": 1 },
+        "roughness": { "type": "number", "minimum": 0, "maximum": 1 },
+        "metalness": { "type": "number", "minimum": 0, "maximum": 1 },
+        "ior": { "type": "number", "minimum": 1 },
+        "thickness": { "type": "number", "minimum": 0 },
+        "emissive": { "$ref": "#/definitions/color" },
+        "emissiveIntensity": { "type": "number", "minimum": 0 },
+        "clearcoat": { "type": "number", "minimum": 0, "maximum": 1 },
+        "clearcoatRoughness": { "type": "number", "minimum": 0, "maximum": 1 },
+        "envMapIntensity": { "type": "number", "minimum": 0 },
+        "attenuationColor": { "$ref": "#/definitions/color" },
+        "attenuationDistance": { "type": "number", "minimum": 0 },
+        "map": { "type": "string" },
+        "normalMap": { "type": "string" },
+        "roughnessMap": { "type": "string" },
+        "metalnessMap": { "type": "string" },
+        "aoMap": { "type": "string" },
+        "emissiveMap": { "type": "string" },
+        "wireframe": { "type": "boolean" },
+        "flatShading": { "type": "boolean" },
+        "fog": { "type": "boolean" }
+      }
+    },
+    "geometryDefinition": {
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["box", "sphere", "cylinder", "plane", "icosahedron", "torus", "cone", "dodecahedron", "octahedron", "tetrahedron", "torusKnot"]
+        },
+        "args": {
+          "type": "array",
+          "items": { "type": "number" }
+        }
+      }
+    },
+    "interactionDefinition": {
+      "type": "object",
+      "properties": {
+        "onClick": { "$ref": "#/definitions/clickInteraction" },
+        "onHover": { "$ref": "#/definitions/hoverInteraction" },
+        "onDoubleClick": { "$ref": "#/definitions/clickInteraction" }
+      }
+    },
+    "clickInteraction": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["navigate", "animate", "material", "custom", "none"]
+        },
+        "target": { "type": "string" },
+        "animation": { "type": "string" },
+        "materialChanges": { "$ref": "#/definitions/materialDefinition" },
+        "customHandler": { "type": "string" }
+      }
+    },
+    "hoverInteraction": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["animate", "material", "custom", "none"]
+        },
+        "animation": { "type": "string" },
+        "materialChanges": { "$ref": "#/definitions/materialDefinition" },
+        "params": { "type": "object" }
+      }
+    },
+    "objectAnimationDefinition": {
+      "type": "object",
+      "required": ["enabled", "types"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "types": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "autoPlay": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "defaultParams": { "type": "object" }
+      }
+    },
+    "constraintDefinition": {
+      "type": "object",
+      "required": ["type", "target"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["lookAt", "maintainDistance", "alignWith", "followPath", "attachToParent"]
+        },
+        "target": { "type": "string" },
+        "params": { "type": "object" }
+      }
+    },
+    "sceneAnimations": {
+      "type": "object",
+      "properties": {
+        "ambient": { "$ref": "#/definitions/ambientAnimationDefinition" },
+        "sequences": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/animationSequenceDefinition" }
+        }
+      }
+    },
+    "ambientAnimationDefinition": {
+      "type": "object",
+      "required": ["enabled", "type", "params"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "type": {
+          "type": "string",
+          "enum": ["rotation", "float", "pulse", "drift"]
+        },
+        "params": { "type": "object" }
+      }
+    },
+    "animationSequenceDefinition": {
+      "type": "object",
+      "required": ["name", "timeline"],
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "timeline": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/timelineEntry" }
+        },
+        "loop": { "type": "boolean" },
+        "autoPlay": { "type": "boolean" }
+      }
+    },
+    "timelineEntry": {
+      "type": "object",
+      "required": ["objectId", "animation", "startTime"],
+      "properties": {
+        "objectId": { "type": "string" },
+        "animation": { "type": "string" },
+        "startTime": { "type": "number", "minimum": 0 },
+        "duration": { "type": "number", "minimum": 0 },
+        "easing": {
+          "type": "string",
+          "enum": ["linear", "easeIn", "easeOut", "easeInOut", "bounce", "elastic"]
+        },
+        "params": { "type": "object" }
+      }
+    },
+    "vector3": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "color": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}$"
+    }
+  }
+}
