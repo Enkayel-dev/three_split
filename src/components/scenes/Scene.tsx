@@ -10,11 +10,17 @@ import ConstructionRoom from './ConstructionRoom'
 import ContactNode from './ContactNode'
 import CameraController from '@/systems/camera/CameraController'
 import { DynamicObjects } from '@/mcp'
+import { SceneLoader } from '@/systems/scene-loader/SceneLoader'
 
 interface SceneProps {
   reducedMotion: boolean
   reducedTransparency: boolean
 }
+
+// Feature flag for dynamic scenes (Phase 2+)
+// Set to 'true' to use JSON-based dynamic scenes
+// Set to 'false' to use legacy static JSX scenes
+const USE_DYNAMIC_SCENES = import.meta.env.VITE_USE_DYNAMIC_SCENES === 'true'
 
 export default function Scene({ reducedMotion, reducedTransparency }: SceneProps) {
   const { currentNode } = useNavigationStore()
@@ -28,6 +34,32 @@ export default function Scene({ reducedMotion, reducedTransparency }: SceneProps
     groupRef.current.rotation.y = Math.sin(t * 0.05) * 0.01
   })
 
+  // Dynamic scene loader (Phase 2+)
+  if (USE_DYNAMIC_SCENES) {
+    return (
+      <>
+        {/* Camera Controller */}
+        <CameraController reducedMotion={reducedMotion} />
+
+        {/* Load scene from JSON */}
+        <SceneLoader
+          sceneId={currentNode}
+          reducedMotion={reducedMotion}
+          reducedTransparency={reducedTransparency}
+        />
+
+        {/* MCP Dynamic Objects (still supported in dynamic mode) */}
+        <DynamicObjects
+          objects={sceneObjects}
+          currentNode={currentNode}
+          reducedMotion={reducedMotion}
+          reducedTransparency={reducedTransparency}
+        />
+      </>
+    )
+  }
+
+  // Legacy static scenes (Phase 1)
   return (
     <>
       {/* Environment & Lighting */}
