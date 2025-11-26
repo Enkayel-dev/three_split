@@ -23,6 +23,9 @@ const WS_PORT = 3001
 export function useSceneBridge() {
   const wsRef = useRef<WebSocket | null>(null)
   const serverRef = useRef<{ close: () => void } | null>(null)
+  const reconnectAttemptsRef = useRef(0)
+  const maxReconnectAttempts = 10
+  const baseReconnectDelay = 1000 // 1 second
 
   // Get store state and actions
   const getSnapshot = useCallback((): SceneSnapshot => {
@@ -327,12 +330,20 @@ export function useSceneBridge() {
 
   useEffect(() => {
     const connectToRelay = () => {
+      // Check if max attempts reached
+      if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+        console.error('MCP Bridge: Max reconnection attempts reached. Stopping reconnection.')
+        return
+      }
+
       try {
         const ws = new WebSocket(`ws://localhost:${WS_PORT}`)
 
         ws.onopen = () => {
           console.log('MCP Bridge: Connected to relay server')
           wsRef.current = ws
+          // Reset reconnection attempts on successful connection
+          reconnectAttemptsRef.current = 0
         }
 
         ws.onmessage = (event) => {
@@ -347,17 +358,29 @@ export function useSceneBridge() {
         }
 
         ws.onclose = () => {
-          console.log('MCP Bridge: Disconnected, reconnecting in 3s...')
           wsRef.current = null
-          setTimeout(connectToRelay, 3000)
+          reconnectAttemptsRef.current += 1
+
+          // Calculate exponential backoff: baseDelay * 2^attempts (capped at 30 seconds)
+          const delay = Math.min(baseReconnectDelay * Math.pow(2, reconnectAttemptsRef.current), 30000)
+
+          console.log(
+            `MCP Bridge: Disconnected. Reconnection attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts} in ${delay}ms...`
+          )
+
+          setTimeout(connectToRelay, delay)
         }
 
-        ws.onerror = () => {
-          // Silent fail - MCP server may not be running
+        ws.onerror = (error) => {
+          console.warn('MCP Bridge: Connection error (MCP server may not be running)', error)
         }
-      } catch {
-        // WebSocket connection failed, retry later
-        setTimeout(connectToRelay, 5000)
+      } catch (error) {
+        console.error('MCP Bridge: WebSocket creation failed', error)
+        reconnectAttemptsRef.current += 1
+
+        // Calculate exponential backoff
+        const delay = Math.min(baseReconnectDelay * Math.pow(2, reconnectAttemptsRef.current), 30000)
+        setTimeout(connectToRelay, delay)
       }
     }
 
@@ -366,6 +389,8 @@ export function useSceneBridge() {
     return () => {
       wsRef.current?.close()
       serverRef.current?.close()
+      // Reset attempts when component unmounts
+      reconnectAttemptsRef.current = 0
     }
   }, [handleMessage])
 
