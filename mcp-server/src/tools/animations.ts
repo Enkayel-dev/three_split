@@ -2,6 +2,7 @@
  * MCP tools for animation control
  */
 
+import { z } from 'zod'
 import type { Tool } from '@modelcontextprotocol/sdk/types.js'
 import type { SceneBridge } from '../bridge/websocket.js'
 
@@ -181,125 +182,166 @@ export const animationTools: Tool[] = [
   },
 ]
 
+// Zod validation schemas
+const GetRegisteredObjectsSchema = z.object({
+  node: z.string().optional(),
+  type: z.string().optional(),
+})
+
+const GetAnimationStateSchema = z.object({
+  objectId: z.string().min(1, 'objectId is required'),
+})
+
+const SetAnimationStateSchema = z.object({
+  objectId: z.string().min(1, 'objectId is required'),
+  hovered: z.boolean().optional(),
+  pressed: z.boolean().optional(),
+  loading: z.boolean().optional(),
+  disabled: z.boolean().optional(),
+})
+
+const GetMaterialParamsSchema = z.object({
+  objectId: z.string().min(1, 'objectId is required'),
+})
+
+const SetMaterialParamsSchema = z.object({
+  objectId: z.string().min(1, 'objectId is required'),
+  transmission: z.number().min(0).max(1).optional(),
+  roughness: z.number().min(0).max(1).optional(),
+  ior: z.number().min(1).max(3).optional(),
+  emissiveIntensity: z.number().min(0).max(1).optional(),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'color must be a valid hex color').optional(),
+  envMapIntensity: z.number().min(0).optional(),
+  clearcoat: z.number().min(0).max(1).optional(),
+})
+
+const TriggerAnimationSchema = z.object({
+  objectId: z.string().min(1, 'objectId is required'),
+  animation: z.string().min(1, 'animation is required'),
+  params: z.record(z.unknown()).optional(),
+})
+
+const ListAnimationsSchema = z.object({
+  objectId: z.string().optional(),
+  type: z.string().optional(),
+})
+
 export async function handleAnimationTool(
   toolName: string,
-  args: Record<string, unknown>,
+  args: Record<string, unknown> | undefined,
   bridge: SceneBridge
 ): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
-  switch (toolName) {
-    case 'get_registered_objects': {
-      const result = await bridge.getRegisteredObjects(args as { node?: string; type?: string })
+  try {
+    switch (toolName) {
+      case 'get_registered_objects': {
+        const params = GetRegisteredObjectsSchema.parse(args || {})
+        const result = await bridge.getRegisteredObjects(params)
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        }
+      }
+
+      case 'get_animation_state': {
+        const { objectId } = GetAnimationStateSchema.parse(args || {})
+        const result = await bridge.getAnimationState(objectId)
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        }
+      }
+
+      case 'set_animation_state': {
+        const { objectId, ...state } = SetAnimationStateSchema.parse(args || {})
+        const result = await bridge.setAnimationState(objectId, state)
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        }
+      }
+
+      case 'get_material_params': {
+        const { objectId } = GetMaterialParamsSchema.parse(args || {})
+        const result = await bridge.getMaterialParams(objectId)
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        }
+      }
+
+      case 'set_material_params': {
+        const { objectId, ...params } = SetMaterialParamsSchema.parse(args || {})
+        const result = await bridge.setMaterialParams(objectId, params)
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        }
+      }
+
+      case 'trigger_animation': {
+        const { objectId, animation, params } = TriggerAnimationSchema.parse(args || {})
+        const result = await bridge.triggerAnimation(objectId, animation, params)
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        }
+      }
+
+      case 'list_animations': {
+        const params = ListAnimationsSchema.parse(args || {})
+        const result = await bridge.listAnimations(params.objectId, params.type)
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        }
+      }
+
+      default:
+        return {
+          content: [{ type: 'text', text: `Unknown animation tool: ${toolName}` }],
+          isError: true,
+        }
+    }
+  } catch (error) {
+    if (error instanceof z.ZodError) {
       return {
         content: [
           {
             type: 'text',
-            text: JSON.stringify(result, null, 2),
+            text: `Validation error: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
           },
         ],
-      }
-    }
-
-    case 'get_animation_state': {
-      const { objectId } = args as { objectId: string }
-      const result = await bridge.getAnimationState(objectId)
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(result, null, 2),
-          },
-        ],
-      }
-    }
-
-    case 'set_animation_state': {
-      const { objectId, ...state } = args as {
-        objectId: string
-        hovered?: boolean
-        pressed?: boolean
-        loading?: boolean
-        disabled?: boolean
-      }
-      const result = await bridge.setAnimationState(objectId, state)
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(result, null, 2),
-          },
-        ],
-      }
-    }
-
-    case 'get_material_params': {
-      const { objectId } = args as { objectId: string }
-      const result = await bridge.getMaterialParams(objectId)
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(result, null, 2),
-          },
-        ],
-      }
-    }
-
-    case 'set_material_params': {
-      const { objectId, ...params } = args as {
-        objectId: string
-        transmission?: number
-        roughness?: number
-        ior?: number
-        emissiveIntensity?: number
-        color?: string
-        envMapIntensity?: number
-        clearcoat?: number
-      }
-      const result = await bridge.setMaterialParams(objectId, params)
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(result, null, 2),
-          },
-        ],
-      }
-    }
-
-    case 'trigger_animation': {
-      const { objectId, animation, params } = args as {
-        objectId: string
-        animation: string
-        params?: Record<string, unknown>
-      }
-      const result = await bridge.triggerAnimation(objectId, animation, params)
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(result, null, 2),
-          },
-        ],
-      }
-    }
-
-    case 'list_animations': {
-      const { objectId, type } = args as { objectId?: string; type?: string }
-      const result = await bridge.listAnimations(objectId, type)
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(result, null, 2),
-          },
-        ],
-      }
-    }
-
-    default:
-      return {
-        content: [{ type: 'text', text: `Unknown animation tool: ${toolName}` }],
         isError: true,
       }
+    }
+    throw error
   }
 }

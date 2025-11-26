@@ -120,11 +120,25 @@ export default function GlassCard({
     })
   }, [setStateHandler])
 
-  // Create material
-  const material = useMemo(
-    () => createLiquidGlassMaterial({ reducedTransparency }),
-    [reducedTransparency]
-  )
+  // Create material with proper disposal
+  const materialRef = useRef<THREE.MeshPhysicalMaterial | null>(null)
+  const material = useMemo(() => {
+    // Dispose old material if it exists
+    if (materialRef.current) {
+      materialRef.current.dispose()
+    }
+
+    const newMat = createLiquidGlassMaterial({ reducedTransparency })
+    materialRef.current = newMat
+    return newMat
+  }, [reducedTransparency])
+
+  // Ensure final disposal on unmount
+  useEffect(() => {
+    return () => {
+      materialRef.current?.dispose()
+    }
+  }, [])
 
   // Idle floating animation
   const idleOffset = useRef(Math.random() * Math.PI * 2) // Random phase

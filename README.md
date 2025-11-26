@@ -61,6 +61,8 @@ three_split/
 
 ## Quick Start
 
+### Standard Development
+
 ```bash
 # Clone the repository
 git clone <repo-url>
@@ -76,10 +78,86 @@ npm run dev
 npm run build
 ```
 
+### MCP Server Mode (AI Control)
+
+The Three Split MCP Server enables AI assistants (like Claude Desktop) to interact with the 3D scene in real-time.
+
+#### Automated Startup (Recommended)
+
+**Unix/Linux/Mac:**
+```bash
+./start.sh
+```
+
+**Windows:**
+```cmd
+start.bat
+```
+
+The startup script will:
+1. ✓ Check and install all dependencies
+2. ✓ Build the MCP server
+3. ✓ Start the WebSocket relay server (port 3001)
+4. ✓ Start the MCP server (stdio)
+5. ✓ Start the React development server (port 5173)
+
+**After running the script:**
+- Open http://localhost:5173 in your browser
+- Start Claude Desktop manually
+- Claude Desktop will automatically connect to the MCP server
+
+Logs are available in the `logs/` directory.
+
+#### Manual Startup
+
+If you prefer to start servers individually:
+
+```bash
+# Terminal 1: Start Relay Server
+cd mcp-server
+node relay.js
+
+# Terminal 2: Start MCP Server
+cd mcp-server
+npm start
+
+# Terminal 3: Start React App
+npm run dev
+```
+
+#### Using the MCP Server
+
+Once all servers are running, Claude Desktop can control the 3D scene using MCP tools. See **[KNOWLEDGEBASE.md](KNOWLEDGEBASE.md)** for:
+- Complete MCP tools reference
+- Scene building workflows
+- Examples and best practices
+- Troubleshooting guide
+
+**Quick Example:**
+```typescript
+// Create a glass card in the scene
+use_mcp_tool({
+  server_name: "three-split-mcp-server",
+  tool_name: "create_object",
+  arguments: {
+    type: "GlassCard",
+    position: [0, 1.2, 0],
+    properties: {
+      title: "Hello World",
+      subtitle: "Created via MCP"
+    }
+  }
+})
+```
+
 ## Documentation
 
-Comprehensive documentation is available in the `/docs` directory:
+Comprehensive documentation is available:
 
+### MCP Server Documentation
+- **[KNOWLEDGEBASE.md](KNOWLEDGEBASE.md)** - Complete MCP tools reference for Claude Desktop
+
+### Design & Architecture Documentation
 - **[Creative Direction](docs/CREATIVE_DIRECTION.md)** - Vision, tone, brand guidelines
 - **[Information Architecture](docs/INFORMATION_ARCHITECTURE.md)** - Site structure, navigation flows
 - **[Component Library](docs/COMPONENT_LIBRARY.md)** - 3D UI component specifications

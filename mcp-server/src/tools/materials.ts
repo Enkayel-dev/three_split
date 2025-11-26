@@ -2,6 +2,7 @@
  * Material editing tools
  */
 
+import { z } from 'zod'
 import type { Tool } from '@modelcontextprotocol/sdk/types.js'
 import type { SceneBridge } from '../bridge/websocket.js'
 
@@ -44,6 +45,15 @@ export const materialTools: Tool[] = [
   },
 ]
 
+// Zod validation schemas
+const SetMaterialSchema = z.object({
+  objectId: z.string().min(1, 'objectId is required'),
+  preset: z.enum(['standard', 'frosted', 'clear', 'tinted', 'highContrast']).optional(),
+  transmission: z.number().min(0).max(1).optional(),
+  roughness: z.number().min(0).max(1).optional(),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'color must be a valid hex color (e.g., #4A90D9)').optional(),
+})
+
 export async function handleMaterialTool(
   name: string,
   args: Record<string, unknown> | undefined,
@@ -51,25 +61,33 @@ export async function handleMaterialTool(
 ): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
   switch (name) {
     case 'set_material': {
-      const params = args as {
-        objectId: string
-        preset?: string
-        transmission?: number
-        roughness?: number
-        color?: string
-      }
-
-      const result = await bridge.setMaterial(params)
-      return {
-        content: [
-          {
-            type: 'text',
-            text: result.success
-              ? `Updated material for ${params.objectId}: ${result.message}`
-              : `Failed to update material: ${result.message}`,
-          },
-        ],
-        isError: !result.success,
+      try {
+        const params = SetMaterialSchema.parse(args || {})
+        const result = await bridge.setMaterial(params)
+        return {
+          content: [
+            {
+              type: 'text',
+              text: result.success
+                ? `Updated material for ${params.objectId}: ${result.message}`
+                : `Failed to update material: ${result.message}`,
+            },
+          ],
+          isError: !result.success,
+        }
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Validation error: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
+              },
+            ],
+            isError: true,
+          }
+        }
+        throw error
       }
     }
 
