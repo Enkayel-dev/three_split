@@ -86,36 +86,16 @@ export default function Scene({ reducedMotion, reducedTransparency }: SceneProps
         />
 
         {/* Render current scene based on navigation */}
-        {currentNode === 'home' && (
-          <HomeHub
-            reducedMotion={reducedMotion}
-            reducedTransparency={reducedTransparency}
-          />
-        )}
+        {currentNode === 'home' && <HomeHub />}
 
         {/* Consulting Room */}
-        {currentNode === 'consulting' && (
-          <ConsultingRoom
-            reducedMotion={reducedMotion}
-            reducedTransparency={reducedTransparency}
-          />
-        )}
+        {currentNode === 'consulting' && <ConsultingRoom />}
 
         {/* Software Room */}
-        {currentNode === 'software' && (
-          <SoftwareRoom
-            reducedMotion={reducedMotion}
-            reducedTransparency={reducedTransparency}
-          />
-        )}
+        {currentNode === 'software' && <SoftwareRoom />}
 
         {/* Construction Room */}
-        {currentNode === 'construction' && (
-          <ConstructionRoom
-            reducedMotion={reducedMotion}
-            reducedTransparency={reducedTransparency}
-          />
-        )}
+        {currentNode === 'construction' && <ConstructionRoom />}
 
         {/* Contact Node */}
         {currentNode === 'contact' && (

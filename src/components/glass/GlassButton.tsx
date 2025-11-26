@@ -66,6 +66,13 @@ export default function GlassButton({
 
   const { width, height, thickness, fontSize } = sizeConfig[size]
 
+  // Store MCP-applied material values to prevent revert on interaction
+  const mcpMaterialRef = useRef<Partial<MaterialState>>({
+    roughness: 0.08,
+    transmission: 0.85,
+    color: undefined,
+  })
+
   // Animation state
   const animationState = useRef(createGlassAnimationState())
 
@@ -118,12 +125,24 @@ export default function GlassButton({
       if (!meshRef.current) return
       const mat = meshRef.current.material as THREE.MeshPhysicalMaterial
 
-      if (params.transmission !== undefined) mat.transmission = params.transmission
-      if (params.roughness !== undefined) mat.roughness = params.roughness
+      // Store MCP values to prevent revert
+      if (params.transmission !== undefined) {
+        mat.transmission = params.transmission
+        mcpMaterialRef.current.transmission = params.transmission
+      }
+      if (params.roughness !== undefined) {
+        mat.roughness = params.roughness
+        mcpMaterialRef.current.roughness = params.roughness
+      }
       if (params.ior !== undefined) mat.ior = params.ior
       if (params.emissiveIntensity !== undefined) mat.emissiveIntensity = params.emissiveIntensity
       if (params.envMapIntensity !== undefined) mat.envMapIntensity = params.envMapIntensity
-      if (params.color !== undefined) mat.color.set(params.color)
+      if (params.color !== undefined) {
+        mat.color.set(params.color)
+        mcpMaterialRef.current.color = params.color
+        // Also set emissive for glow effect
+        if (mat.emissive) mat.emissive.set(params.color)
+      }
 
       mat.needsUpdate = true
     })

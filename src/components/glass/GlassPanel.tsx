@@ -41,10 +41,16 @@ export default function GlassPanel({
   const [hovered, setHovered] = useState(false)
   const [pressed, setPressed] = useState(false)
 
+  // Store MCP-applied material values to prevent revert on interaction
+  const mcpMaterialRef = useRef<Partial<MaterialState>>({
+    roughness: 0.12,
+    transmission: 0.92,
+    color: undefined,
+  })
+
   // Register with scene registry for MCP control
   const {
     updateAnimationState,
-    updateMaterialState,
     setAnimationHandler,
     setMaterialHandler,
     setStateHandler,
@@ -88,14 +94,22 @@ export default function GlassPanel({
       if (!meshRef.current) return
       const mat = meshRef.current.material as THREE.MeshPhysicalMaterial
 
-      if (params.transmission !== undefined) mat.transmission = params.transmission
-      if (params.roughness !== undefined) mat.roughness = params.roughness
+      // Store MCP values to prevent revert
+      if (params.transmission !== undefined) {
+        mat.transmission = params.transmission
+        mcpMaterialRef.current.transmission = params.transmission
+      }
+      if (params.roughness !== undefined) {
+        mat.roughness = params.roughness
+        mcpMaterialRef.current.roughness = params.roughness
+      }
       if (params.ior !== undefined) mat.ior = params.ior
       if (params.emissiveIntensity !== undefined) mat.emissiveIntensity = params.emissiveIntensity
       if (params.envMapIntensity !== undefined) mat.envMapIntensity = params.envMapIntensity
       if (params.clearcoat !== undefined) mat.clearcoat = params.clearcoat
       if (params.color !== undefined) {
         mat.color.set(params.color)
+        mcpMaterialRef.current.color = params.color
         // Also tint attenuationColor for glass effect
         if (mat.attenuationColor) mat.attenuationColor.set(params.color)
         // Set emissive for glow effect
@@ -132,11 +146,16 @@ export default function GlassPanel({
   useFrame(() => {
     if (!meshRef.current || reducedMotion) return
     const mat = meshRef.current.material as THREE.MeshPhysicalMaterial
+
+    // Use MCP-applied base roughness if set, otherwise use default
+    const baseRoughness = mcpMaterialRef.current.roughness ?? 0.12
+    const targetRoughness = hovered ? Math.max(0.08, baseRoughness - 0.04) : baseRoughness
+
     if (mat.roughness !== undefined) {
       // Slightly decrease roughness on hover for shinier look
       mat.roughness = THREE.MathUtils.lerp(
         mat.roughness,
-        hovered ? 0.08 : 0.12,
+        targetRoughness,
         0.1
       )
     }
@@ -147,12 +166,7 @@ export default function GlassPanel({
       pressed,
       idle: !hovered && !pressed,
       currentScale: [1, 1, 1],
-      currentRoughness: mat.roughness || 0.12,
-    })
-
-    updateMaterialState({
-      roughness: mat.roughness,
-      transmission: mat.transmission,
+      currentRoughness: mat.roughness || baseRoughness,
     })
   })
 
